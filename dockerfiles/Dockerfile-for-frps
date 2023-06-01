@@ -1,0 +1,12 @@
+FROM golang:1.20 AS building
+
+COPY . /building
+WORKDIR /building
+
+RUN make server
+
+FROM alpine:3
+
+COPY --from=building /building/bin/tools /usr/bin/tools
+
+ENTRYPOINT ["/usr/bin/tools"]

@@ -1,0 +1,12 @@
+FROM golang:1.20 AS building
+
+COPY . /building
+WORKDIR /building
+
+RUN make client
+
+FROM alpine:3
+
+COPY --from=building /building/bin/toolc /usr/bin/toolc
+
+ENTRYPOINT ["/usr/bin/toolc"]

@@ -1,0 +1,27 @@
+export PATH := $(GOPATH)/bin:$(PATH)
+export GO111MODULE=on
+LDFLAGS := -s -w
+
+os-archs=darwin:amd64 darwin:arm64 freebsd:386 freebsd:amd64 linux:386 linux:amd64 linux:arm linux:arm64 windows:386 windows:amd64 windows:arm64 linux:mips64 linux:mips64le linux:mips:softfloat linux:mipsle:softfloat linux:riscv64
+
+all: build
+
+build: app
+
+app:
+	@$(foreach n, $(os-archs),\
+		os=$(shell echo "$(n)" | cut -d : -f 1);\
+		arch=$(shell echo "$(n)" | cut -d : -f 2);\
+		gomips=$(shell echo "$(n)" | cut -d : -f 3);\
+		target_suffix=$${os}_$${arch};\
+		echo "Build $${os}-$${arch}...";\
+		env CGO_ENABLED=0 GOOS=$${os} GOARCH=$${arch} GOMIPS=$${gomips} go build -trimpath -ldflags "$(LDFLAGS)" -o ./release/client_$${target_suffix} ./cmd/client;\
+		env CGO_ENABLED=0 GOOS=$${os} GOARCH=$${arch} GOMIPS=$${gomips} go build -trimpath -ldflags "$(LDFLAGS)" -o ./release/server_$${target_suffix} ./cmd/server;\
+		echo "Build $${os}-$${arch} done";\
+	)
+	@mv ./release/client_windows_386 ./release/client_windows_386.exe
+	@mv ./release/server_windows_386 ./release/server_windows_386.exe
+	@mv ./release/client_windows_amd64 ./release/client_windows_amd64.exe
+	@mv ./release/server_windows_amd64 ./release/server_windows_amd64.exe
+	@mv ./release/client_windows_arm64 ./release/client_windows_arm64.exe
+	@mv ./release/server_windows_arm64 ./release/server_windows_arm64.exe
